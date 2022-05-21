@@ -10,11 +10,10 @@ import (
 	"os"
 	v1 "telegram-bot/api/v1"
 	"telegram-bot/internal/config"
-	"telegram-bot/pkg/decorator/httputil"
 )
 
 var (
-	port = flag.Int("port", 5120, "listen port")
+	port = flag.Int("port", 5121, "listen port")
 	conf = flag.String("conf", "config.toml", "config path")
 )
 
@@ -32,14 +31,7 @@ func init() {
 
 func main() {
 	r := gin.Default()
-
-	// v1
-	{
-		g := r.Group("/v1")
-		g.GET("/", v1.HelloWorld)
-		g.POST("/", v1.HelloWorld)
-		g.POST("/:token", httputil.RequireToken(config.Basic.UrlToken, v1.BotHandle))
-	}
+	r.GET("/", v1.EcdictHandle)
 
 	if err := r.Run(fmt.Sprintf(":%d", *port)); err != nil {
 		log.Fatalf("run panic: %v", err)

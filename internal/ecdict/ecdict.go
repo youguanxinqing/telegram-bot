@@ -27,7 +27,7 @@ type Word struct {
 	Collins     CollinsLevel
 }
 
-const url = "http://dict.e.opac.vip/dict.php?sw=%s"
+const url = "http://127.0.0.1:5121?sw=%s"
 
 // QueryWord 查询单词.
 func QueryWord(ctx context.Context, word string) (Word, error) {
@@ -40,7 +40,7 @@ func QueryWord(ctx context.Context, word string) (Word, error) {
 
 	var m []map[string]any
 	if err := json.Unmarshal(resp.Body, &m); err != nil || len(m) == 0 {
-		return w, nil
+		return w, fmt.Errorf("not found '%s' or exist err: %v", word, err)
 	}
 
 	var sw Word

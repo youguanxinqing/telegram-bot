@@ -3,11 +3,36 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
 
 var (
+	// StardictColumns holds the columns for the "stardict" table.
+	StardictColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "word", Type: field.TypeString, Unique: true},
+		{Name: "sw", Type: field.TypeString},
+		{Name: "phonetic", Type: field.TypeString, Default: ""},
+		{Name: "definition", Type: field.TypeString, Size: 2147483647, Default: ""},
+		{Name: "translation", Type: field.TypeString, Size: 2147483647, Default: ""},
+		{Name: "pos", Type: field.TypeString, Default: ""},
+		{Name: "collins", Type: field.TypeInt, Default: 0},
+		{Name: "oxford", Type: field.TypeInt, Default: 0},
+		{Name: "tag", Type: field.TypeString, Default: ""},
+		{Name: "bnc", Type: field.TypeInt},
+		{Name: "frq", Type: field.TypeInt},
+		{Name: "exchange", Type: field.TypeString, Size: 2147483647, Default: ""},
+		{Name: "detail", Type: field.TypeString, Size: 2147483647, Default: ""},
+		{Name: "audio", Type: field.TypeString, Size: 2147483647, Default: ""},
+	}
+	// StardictTable holds the schema information for the "stardict" table.
+	StardictTable = &schema.Table{
+		Name:       "stardict",
+		Columns:    StardictColumns,
+		PrimaryKey: []*schema.Column{StardictColumns[0]},
+	}
 	// WordsColumns holds the columns for the "words" table.
 	WordsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -29,9 +54,13 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		StardictTable,
 		WordsTable,
 	}
 )
 
 func init() {
+	StardictTable.Annotation = &entsql.Annotation{
+		Table: "stardict",
+	}
 }

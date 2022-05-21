@@ -6,5 +6,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// StarDict is the predicate function for stardict builders.
+type StarDict func(*sql.Selector)
+
 // Words is the predicate function for words builders.
 type Words func(*sql.Selector)

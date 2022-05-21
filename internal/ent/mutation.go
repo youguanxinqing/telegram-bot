@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sync"
 	"telegram-bot/internal/ent/predicate"
+	"telegram-bot/internal/ent/stardict"
 	"telegram-bot/internal/ent/words"
 	"time"
 
@@ -23,8 +24,1157 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeWords = "Words"
+	TypeStarDict = "StarDict"
+	TypeWords    = "Words"
 )
+
+// StarDictMutation represents an operation that mutates the StarDict nodes in the graph.
+type StarDictMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	word          *string
+	sw            *string
+	phonetic      *string
+	definition    *string
+	translation   *string
+	pos           *string
+	collins       *int
+	addcollins    *int
+	oxford        *int
+	addoxford     *int
+	tag           *string
+	bnc           *int
+	addbnc        *int
+	frq           *int
+	addfrq        *int
+	exchange      *string
+	detail        *string
+	audio         *string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*StarDict, error)
+	predicates    []predicate.StarDict
+}
+
+var _ ent.Mutation = (*StarDictMutation)(nil)
+
+// stardictOption allows management of the mutation configuration using functional options.
+type stardictOption func(*StarDictMutation)
+
+// newStarDictMutation creates new mutation for the StarDict entity.
+func newStarDictMutation(c config, op Op, opts ...stardictOption) *StarDictMutation {
+	m := &StarDictMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeStarDict,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withStarDictID sets the ID field of the mutation.
+func withStarDictID(id int) stardictOption {
+	return func(m *StarDictMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *StarDict
+		)
+		m.oldValue = func(ctx context.Context) (*StarDict, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().StarDict.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withStarDict sets the old StarDict of the mutation.
+func withStarDict(node *StarDict) stardictOption {
+	return func(m *StarDictMutation) {
+		m.oldValue = func(context.Context) (*StarDict, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m StarDictMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m StarDictMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *StarDictMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *StarDictMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().StarDict.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetWord sets the "word" field.
+func (m *StarDictMutation) SetWord(s string) {
+	m.word = &s
+}
+
+// Word returns the value of the "word" field in the mutation.
+func (m *StarDictMutation) Word() (r string, exists bool) {
+	v := m.word
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWord returns the old "word" field's value of the StarDict entity.
+// If the StarDict object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StarDictMutation) OldWord(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWord is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWord requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWord: %w", err)
+	}
+	return oldValue.Word, nil
+}
+
+// ResetWord resets all changes to the "word" field.
+func (m *StarDictMutation) ResetWord() {
+	m.word = nil
+}
+
+// SetSw sets the "sw" field.
+func (m *StarDictMutation) SetSw(s string) {
+	m.sw = &s
+}
+
+// Sw returns the value of the "sw" field in the mutation.
+func (m *StarDictMutation) Sw() (r string, exists bool) {
+	v := m.sw
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSw returns the old "sw" field's value of the StarDict entity.
+// If the StarDict object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StarDictMutation) OldSw(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSw is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSw requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSw: %w", err)
+	}
+	return oldValue.Sw, nil
+}
+
+// ResetSw resets all changes to the "sw" field.
+func (m *StarDictMutation) ResetSw() {
+	m.sw = nil
+}
+
+// SetPhonetic sets the "phonetic" field.
+func (m *StarDictMutation) SetPhonetic(s string) {
+	m.phonetic = &s
+}
+
+// Phonetic returns the value of the "phonetic" field in the mutation.
+func (m *StarDictMutation) Phonetic() (r string, exists bool) {
+	v := m.phonetic
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPhonetic returns the old "phonetic" field's value of the StarDict entity.
+// If the StarDict object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StarDictMutation) OldPhonetic(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPhonetic is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPhonetic requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPhonetic: %w", err)
+	}
+	return oldValue.Phonetic, nil
+}
+
+// ResetPhonetic resets all changes to the "phonetic" field.
+func (m *StarDictMutation) ResetPhonetic() {
+	m.phonetic = nil
+}
+
+// SetDefinition sets the "definition" field.
+func (m *StarDictMutation) SetDefinition(s string) {
+	m.definition = &s
+}
+
+// Definition returns the value of the "definition" field in the mutation.
+func (m *StarDictMutation) Definition() (r string, exists bool) {
+	v := m.definition
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDefinition returns the old "definition" field's value of the StarDict entity.
+// If the StarDict object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StarDictMutation) OldDefinition(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDefinition is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDefinition requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDefinition: %w", err)
+	}
+	return oldValue.Definition, nil
+}
+
+// ResetDefinition resets all changes to the "definition" field.
+func (m *StarDictMutation) ResetDefinition() {
+	m.definition = nil
+}
+
+// SetTranslation sets the "translation" field.
+func (m *StarDictMutation) SetTranslation(s string) {
+	m.translation = &s
+}
+
+// Translation returns the value of the "translation" field in the mutation.
+func (m *StarDictMutation) Translation() (r string, exists bool) {
+	v := m.translation
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTranslation returns the old "translation" field's value of the StarDict entity.
+// If the StarDict object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StarDictMutation) OldTranslation(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTranslation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTranslation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTranslation: %w", err)
+	}
+	return oldValue.Translation, nil
+}
+
+// ResetTranslation resets all changes to the "translation" field.
+func (m *StarDictMutation) ResetTranslation() {
+	m.translation = nil
+}
+
+// SetPos sets the "pos" field.
+func (m *StarDictMutation) SetPos(s string) {
+	m.pos = &s
+}
+
+// Pos returns the value of the "pos" field in the mutation.
+func (m *StarDictMutation) Pos() (r string, exists bool) {
+	v := m.pos
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPos returns the old "pos" field's value of the StarDict entity.
+// If the StarDict object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StarDictMutation) OldPos(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPos is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPos requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPos: %w", err)
+	}
+	return oldValue.Pos, nil
+}
+
+// ResetPos resets all changes to the "pos" field.
+func (m *StarDictMutation) ResetPos() {
+	m.pos = nil
+}
+
+// SetCollins sets the "collins" field.
+func (m *StarDictMutation) SetCollins(i int) {
+	m.collins = &i
+	m.addcollins = nil
+}
+
+// Collins returns the value of the "collins" field in the mutation.
+func (m *StarDictMutation) Collins() (r int, exists bool) {
+	v := m.collins
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCollins returns the old "collins" field's value of the StarDict entity.
+// If the StarDict object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StarDictMutation) OldCollins(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCollins is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCollins requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCollins: %w", err)
+	}
+	return oldValue.Collins, nil
+}
+
+// AddCollins adds i to the "collins" field.
+func (m *StarDictMutation) AddCollins(i int) {
+	if m.addcollins != nil {
+		*m.addcollins += i
+	} else {
+		m.addcollins = &i
+	}
+}
+
+// AddedCollins returns the value that was added to the "collins" field in this mutation.
+func (m *StarDictMutation) AddedCollins() (r int, exists bool) {
+	v := m.addcollins
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCollins resets all changes to the "collins" field.
+func (m *StarDictMutation) ResetCollins() {
+	m.collins = nil
+	m.addcollins = nil
+}
+
+// SetOxford sets the "oxford" field.
+func (m *StarDictMutation) SetOxford(i int) {
+	m.oxford = &i
+	m.addoxford = nil
+}
+
+// Oxford returns the value of the "oxford" field in the mutation.
+func (m *StarDictMutation) Oxford() (r int, exists bool) {
+	v := m.oxford
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOxford returns the old "oxford" field's value of the StarDict entity.
+// If the StarDict object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StarDictMutation) OldOxford(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOxford is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOxford requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOxford: %w", err)
+	}
+	return oldValue.Oxford, nil
+}
+
+// AddOxford adds i to the "oxford" field.
+func (m *StarDictMutation) AddOxford(i int) {
+	if m.addoxford != nil {
+		*m.addoxford += i
+	} else {
+		m.addoxford = &i
+	}
+}
+
+// AddedOxford returns the value that was added to the "oxford" field in this mutation.
+func (m *StarDictMutation) AddedOxford() (r int, exists bool) {
+	v := m.addoxford
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetOxford resets all changes to the "oxford" field.
+func (m *StarDictMutation) ResetOxford() {
+	m.oxford = nil
+	m.addoxford = nil
+}
+
+// SetTag sets the "tag" field.
+func (m *StarDictMutation) SetTag(s string) {
+	m.tag = &s
+}
+
+// Tag returns the value of the "tag" field in the mutation.
+func (m *StarDictMutation) Tag() (r string, exists bool) {
+	v := m.tag
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTag returns the old "tag" field's value of the StarDict entity.
+// If the StarDict object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StarDictMutation) OldTag(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTag is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTag requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTag: %w", err)
+	}
+	return oldValue.Tag, nil
+}
+
+// ResetTag resets all changes to the "tag" field.
+func (m *StarDictMutation) ResetTag() {
+	m.tag = nil
+}
+
+// SetBnc sets the "bnc" field.
+func (m *StarDictMutation) SetBnc(i int) {
+	m.bnc = &i
+	m.addbnc = nil
+}
+
+// Bnc returns the value of the "bnc" field in the mutation.
+func (m *StarDictMutation) Bnc() (r int, exists bool) {
+	v := m.bnc
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBnc returns the old "bnc" field's value of the StarDict entity.
+// If the StarDict object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StarDictMutation) OldBnc(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBnc is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBnc requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBnc: %w", err)
+	}
+	return oldValue.Bnc, nil
+}
+
+// AddBnc adds i to the "bnc" field.
+func (m *StarDictMutation) AddBnc(i int) {
+	if m.addbnc != nil {
+		*m.addbnc += i
+	} else {
+		m.addbnc = &i
+	}
+}
+
+// AddedBnc returns the value that was added to the "bnc" field in this mutation.
+func (m *StarDictMutation) AddedBnc() (r int, exists bool) {
+	v := m.addbnc
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetBnc resets all changes to the "bnc" field.
+func (m *StarDictMutation) ResetBnc() {
+	m.bnc = nil
+	m.addbnc = nil
+}
+
+// SetFrq sets the "frq" field.
+func (m *StarDictMutation) SetFrq(i int) {
+	m.frq = &i
+	m.addfrq = nil
+}
+
+// Frq returns the value of the "frq" field in the mutation.
+func (m *StarDictMutation) Frq() (r int, exists bool) {
+	v := m.frq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFrq returns the old "frq" field's value of the StarDict entity.
+// If the StarDict object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StarDictMutation) OldFrq(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFrq is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFrq requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFrq: %w", err)
+	}
+	return oldValue.Frq, nil
+}
+
+// AddFrq adds i to the "frq" field.
+func (m *StarDictMutation) AddFrq(i int) {
+	if m.addfrq != nil {
+		*m.addfrq += i
+	} else {
+		m.addfrq = &i
+	}
+}
+
+// AddedFrq returns the value that was added to the "frq" field in this mutation.
+func (m *StarDictMutation) AddedFrq() (r int, exists bool) {
+	v := m.addfrq
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFrq resets all changes to the "frq" field.
+func (m *StarDictMutation) ResetFrq() {
+	m.frq = nil
+	m.addfrq = nil
+}
+
+// SetExchange sets the "exchange" field.
+func (m *StarDictMutation) SetExchange(s string) {
+	m.exchange = &s
+}
+
+// Exchange returns the value of the "exchange" field in the mutation.
+func (m *StarDictMutation) Exchange() (r string, exists bool) {
+	v := m.exchange
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExchange returns the old "exchange" field's value of the StarDict entity.
+// If the StarDict object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StarDictMutation) OldExchange(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExchange is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExchange requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExchange: %w", err)
+	}
+	return oldValue.Exchange, nil
+}
+
+// ResetExchange resets all changes to the "exchange" field.
+func (m *StarDictMutation) ResetExchange() {
+	m.exchange = nil
+}
+
+// SetDetail sets the "detail" field.
+func (m *StarDictMutation) SetDetail(s string) {
+	m.detail = &s
+}
+
+// Detail returns the value of the "detail" field in the mutation.
+func (m *StarDictMutation) Detail() (r string, exists bool) {
+	v := m.detail
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDetail returns the old "detail" field's value of the StarDict entity.
+// If the StarDict object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StarDictMutation) OldDetail(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDetail is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDetail requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDetail: %w", err)
+	}
+	return oldValue.Detail, nil
+}
+
+// ResetDetail resets all changes to the "detail" field.
+func (m *StarDictMutation) ResetDetail() {
+	m.detail = nil
+}
+
+// SetAudio sets the "audio" field.
+func (m *StarDictMutation) SetAudio(s string) {
+	m.audio = &s
+}
+
+// Audio returns the value of the "audio" field in the mutation.
+func (m *StarDictMutation) Audio() (r string, exists bool) {
+	v := m.audio
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAudio returns the old "audio" field's value of the StarDict entity.
+// If the StarDict object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StarDictMutation) OldAudio(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAudio is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAudio requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAudio: %w", err)
+	}
+	return oldValue.Audio, nil
+}
+
+// ResetAudio resets all changes to the "audio" field.
+func (m *StarDictMutation) ResetAudio() {
+	m.audio = nil
+}
+
+// Where appends a list predicates to the StarDictMutation builder.
+func (m *StarDictMutation) Where(ps ...predicate.StarDict) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *StarDictMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (StarDict).
+func (m *StarDictMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *StarDictMutation) Fields() []string {
+	fields := make([]string, 0, 14)
+	if m.word != nil {
+		fields = append(fields, stardict.FieldWord)
+	}
+	if m.sw != nil {
+		fields = append(fields, stardict.FieldSw)
+	}
+	if m.phonetic != nil {
+		fields = append(fields, stardict.FieldPhonetic)
+	}
+	if m.definition != nil {
+		fields = append(fields, stardict.FieldDefinition)
+	}
+	if m.translation != nil {
+		fields = append(fields, stardict.FieldTranslation)
+	}
+	if m.pos != nil {
+		fields = append(fields, stardict.FieldPos)
+	}
+	if m.collins != nil {
+		fields = append(fields, stardict.FieldCollins)
+	}
+	if m.oxford != nil {
+		fields = append(fields, stardict.FieldOxford)
+	}
+	if m.tag != nil {
+		fields = append(fields, stardict.FieldTag)
+	}
+	if m.bnc != nil {
+		fields = append(fields, stardict.FieldBnc)
+	}
+	if m.frq != nil {
+		fields = append(fields, stardict.FieldFrq)
+	}
+	if m.exchange != nil {
+		fields = append(fields, stardict.FieldExchange)
+	}
+	if m.detail != nil {
+		fields = append(fields, stardict.FieldDetail)
+	}
+	if m.audio != nil {
+		fields = append(fields, stardict.FieldAudio)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *StarDictMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case stardict.FieldWord:
+		return m.Word()
+	case stardict.FieldSw:
+		return m.Sw()
+	case stardict.FieldPhonetic:
+		return m.Phonetic()
+	case stardict.FieldDefinition:
+		return m.Definition()
+	case stardict.FieldTranslation:
+		return m.Translation()
+	case stardict.FieldPos:
+		return m.Pos()
+	case stardict.FieldCollins:
+		return m.Collins()
+	case stardict.FieldOxford:
+		return m.Oxford()
+	case stardict.FieldTag:
+		return m.Tag()
+	case stardict.FieldBnc:
+		return m.Bnc()
+	case stardict.FieldFrq:
+		return m.Frq()
+	case stardict.FieldExchange:
+		return m.Exchange()
+	case stardict.FieldDetail:
+		return m.Detail()
+	case stardict.FieldAudio:
+		return m.Audio()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *StarDictMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case stardict.FieldWord:
+		return m.OldWord(ctx)
+	case stardict.FieldSw:
+		return m.OldSw(ctx)
+	case stardict.FieldPhonetic:
+		return m.OldPhonetic(ctx)
+	case stardict.FieldDefinition:
+		return m.OldDefinition(ctx)
+	case stardict.FieldTranslation:
+		return m.OldTranslation(ctx)
+	case stardict.FieldPos:
+		return m.OldPos(ctx)
+	case stardict.FieldCollins:
+		return m.OldCollins(ctx)
+	case stardict.FieldOxford:
+		return m.OldOxford(ctx)
+	case stardict.FieldTag:
+		return m.OldTag(ctx)
+	case stardict.FieldBnc:
+		return m.OldBnc(ctx)
+	case stardict.FieldFrq:
+		return m.OldFrq(ctx)
+	case stardict.FieldExchange:
+		return m.OldExchange(ctx)
+	case stardict.FieldDetail:
+		return m.OldDetail(ctx)
+	case stardict.FieldAudio:
+		return m.OldAudio(ctx)
+	}
+	return nil, fmt.Errorf("unknown StarDict field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *StarDictMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case stardict.FieldWord:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWord(v)
+		return nil
+	case stardict.FieldSw:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSw(v)
+		return nil
+	case stardict.FieldPhonetic:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPhonetic(v)
+		return nil
+	case stardict.FieldDefinition:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDefinition(v)
+		return nil
+	case stardict.FieldTranslation:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTranslation(v)
+		return nil
+	case stardict.FieldPos:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPos(v)
+		return nil
+	case stardict.FieldCollins:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCollins(v)
+		return nil
+	case stardict.FieldOxford:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOxford(v)
+		return nil
+	case stardict.FieldTag:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTag(v)
+		return nil
+	case stardict.FieldBnc:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBnc(v)
+		return nil
+	case stardict.FieldFrq:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFrq(v)
+		return nil
+	case stardict.FieldExchange:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExchange(v)
+		return nil
+	case stardict.FieldDetail:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDetail(v)
+		return nil
+	case stardict.FieldAudio:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAudio(v)
+		return nil
+	}
+	return fmt.Errorf("unknown StarDict field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *StarDictMutation) AddedFields() []string {
+	var fields []string
+	if m.addcollins != nil {
+		fields = append(fields, stardict.FieldCollins)
+	}
+	if m.addoxford != nil {
+		fields = append(fields, stardict.FieldOxford)
+	}
+	if m.addbnc != nil {
+		fields = append(fields, stardict.FieldBnc)
+	}
+	if m.addfrq != nil {
+		fields = append(fields, stardict.FieldFrq)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *StarDictMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case stardict.FieldCollins:
+		return m.AddedCollins()
+	case stardict.FieldOxford:
+		return m.AddedOxford()
+	case stardict.FieldBnc:
+		return m.AddedBnc()
+	case stardict.FieldFrq:
+		return m.AddedFrq()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *StarDictMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case stardict.FieldCollins:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCollins(v)
+		return nil
+	case stardict.FieldOxford:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOxford(v)
+		return nil
+	case stardict.FieldBnc:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBnc(v)
+		return nil
+	case stardict.FieldFrq:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFrq(v)
+		return nil
+	}
+	return fmt.Errorf("unknown StarDict numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *StarDictMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *StarDictMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *StarDictMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown StarDict nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *StarDictMutation) ResetField(name string) error {
+	switch name {
+	case stardict.FieldWord:
+		m.ResetWord()
+		return nil
+	case stardict.FieldSw:
+		m.ResetSw()
+		return nil
+	case stardict.FieldPhonetic:
+		m.ResetPhonetic()
+		return nil
+	case stardict.FieldDefinition:
+		m.ResetDefinition()
+		return nil
+	case stardict.FieldTranslation:
+		m.ResetTranslation()
+		return nil
+	case stardict.FieldPos:
+		m.ResetPos()
+		return nil
+	case stardict.FieldCollins:
+		m.ResetCollins()
+		return nil
+	case stardict.FieldOxford:
+		m.ResetOxford()
+		return nil
+	case stardict.FieldTag:
+		m.ResetTag()
+		return nil
+	case stardict.FieldBnc:
+		m.ResetBnc()
+		return nil
+	case stardict.FieldFrq:
+		m.ResetFrq()
+		return nil
+	case stardict.FieldExchange:
+		m.ResetExchange()
+		return nil
+	case stardict.FieldDetail:
+		m.ResetDetail()
+		return nil
+	case stardict.FieldAudio:
+		m.ResetAudio()
+		return nil
+	}
+	return fmt.Errorf("unknown StarDict field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *StarDictMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *StarDictMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *StarDictMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *StarDictMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *StarDictMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *StarDictMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *StarDictMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown StarDict unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *StarDictMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown StarDict edge %s", name)
+}
 
 // WordsMutation represents an operation that mutates the Words nodes in the graph.
 type WordsMutation struct {

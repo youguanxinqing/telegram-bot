@@ -4,6 +4,9 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	"net/http"
+	"strings"
+	"telegram-bot/internal/app/english"
 	"telegram-bot/internal/config"
 	"telegram-bot/internal/dispatch"
 	"telegram-bot/internal/telegram/message"
@@ -17,6 +20,7 @@ func HelloWorld(c *gin.Context) {
 	})
 }
 
+// BotHandle telegram bot 入口函数.
 func BotHandle(c *gin.Context) {
 	now := time.Now()
 
@@ -46,4 +50,24 @@ func BotHandle(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{})
+}
+
+// EcdictHandle 单词查询服务器.
+func EcdictHandle(c *gin.Context) {
+	if c.Query("sw") == "" {
+		c.JSON(200, []string{})
+		return
+	}
+
+	srv := english.New()
+	ws := strings.Split(c.Query("sw"), ",")
+	log.Println(ws)
+	stars, err := srv.Search(context.TODO(), ws...)
+	log.Println(stars)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, []string{err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, stars)
 }

@@ -8,6 +8,19 @@ import (
 	"telegram-bot/internal/ent"
 )
 
+// The StarDictFunc type is an adapter to allow the use of ordinary
+// function as StarDict mutator.
+type StarDictFunc func(context.Context, *ent.StarDictMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f StarDictFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.StarDictMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.StarDictMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The WordsFunc type is an adapter to allow the use of ordinary
 // function as Words mutator.
 type WordsFunc func(context.Context, *ent.WordsMutation) (ent.Value, error)

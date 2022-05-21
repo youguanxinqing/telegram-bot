@@ -9,6 +9,7 @@ import (
 
 	"telegram-bot/internal/ent/migrate"
 
+	"telegram-bot/internal/ent/stardict"
 	"telegram-bot/internal/ent/words"
 
 	"entgo.io/ent/dialect"
@@ -20,6 +21,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// StarDict is the client for interacting with the StarDict builders.
+	StarDict *StarDictClient
 	// Words is the client for interacting with the Words builders.
 	Words *WordsClient
 }
@@ -35,6 +38,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.StarDict = NewStarDictClient(c.config)
 	c.Words = NewWordsClient(c.config)
 }
 
@@ -67,9 +71,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Words:  NewWordsClient(cfg),
+		ctx:      ctx,
+		config:   cfg,
+		StarDict: NewStarDictClient(cfg),
+		Words:    NewWordsClient(cfg),
 	}, nil
 }
 
@@ -87,16 +92,17 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Words:  NewWordsClient(cfg),
+		ctx:      ctx,
+		config:   cfg,
+		StarDict: NewStarDictClient(cfg),
+		Words:    NewWordsClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Words.
+//		StarDict.
 //		Query().
 //		Count(ctx)
 //
@@ -119,7 +125,98 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.StarDict.Use(hooks...)
 	c.Words.Use(hooks...)
+}
+
+// StarDictClient is a client for the StarDict schema.
+type StarDictClient struct {
+	config
+}
+
+// NewStarDictClient returns a client for the StarDict from the given config.
+func NewStarDictClient(c config) *StarDictClient {
+	return &StarDictClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `stardict.Hooks(f(g(h())))`.
+func (c *StarDictClient) Use(hooks ...Hook) {
+	c.hooks.StarDict = append(c.hooks.StarDict, hooks...)
+}
+
+// Create returns a create builder for StarDict.
+func (c *StarDictClient) Create() *StarDictCreate {
+	mutation := newStarDictMutation(c.config, OpCreate)
+	return &StarDictCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of StarDict entities.
+func (c *StarDictClient) CreateBulk(builders ...*StarDictCreate) *StarDictCreateBulk {
+	return &StarDictCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for StarDict.
+func (c *StarDictClient) Update() *StarDictUpdate {
+	mutation := newStarDictMutation(c.config, OpUpdate)
+	return &StarDictUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *StarDictClient) UpdateOne(sd *StarDict) *StarDictUpdateOne {
+	mutation := newStarDictMutation(c.config, OpUpdateOne, withStarDict(sd))
+	return &StarDictUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *StarDictClient) UpdateOneID(id int) *StarDictUpdateOne {
+	mutation := newStarDictMutation(c.config, OpUpdateOne, withStarDictID(id))
+	return &StarDictUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for StarDict.
+func (c *StarDictClient) Delete() *StarDictDelete {
+	mutation := newStarDictMutation(c.config, OpDelete)
+	return &StarDictDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *StarDictClient) DeleteOne(sd *StarDict) *StarDictDeleteOne {
+	return c.DeleteOneID(sd.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *StarDictClient) DeleteOneID(id int) *StarDictDeleteOne {
+	builder := c.Delete().Where(stardict.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &StarDictDeleteOne{builder}
+}
+
+// Query returns a query builder for StarDict.
+func (c *StarDictClient) Query() *StarDictQuery {
+	return &StarDictQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a StarDict entity by its id.
+func (c *StarDictClient) Get(ctx context.Context, id int) (*StarDict, error) {
+	return c.Query().Where(stardict.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *StarDictClient) GetX(ctx context.Context, id int) *StarDict {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *StarDictClient) Hooks() []Hook {
+	return c.hooks.StarDict
 }
 
 // WordsClient is a client for the Words schema.

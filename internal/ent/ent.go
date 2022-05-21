@@ -5,6 +5,7 @@ package ent
 import (
 	"errors"
 	"fmt"
+	"telegram-bot/internal/ent/stardict"
 	"telegram-bot/internal/ent/words"
 
 	"entgo.io/ent"
@@ -29,7 +30,8 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		words.Table: words.ValidColumn,
+		stardict.Table: stardict.ValidColumn,
+		words.Table:    words.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {
