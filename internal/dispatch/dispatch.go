@@ -96,7 +96,7 @@ func callWord(rawCmd string, action string, args string) string {
 
 	srv := word.New(db)
 	switch action {
-	case "save":
+	case "s", "save":
 		if w, err := srv.SaveWord(context.TODO(), args); err != nil {
 			return fmt.Sprintf("fail cmd '%s', err: %v", rawCmd, err)
 		} else {
@@ -106,7 +106,7 @@ func callWord(rawCmd string, action string, args string) string {
 			buf.WriteString(w.String())
 			return buf.String()
 		}
-	case "rand":
+	case "r", "rand":
 		if ws, err := srv.RandomWords(context.TODO(), cast.ToInt(args)); err != nil {
 			return fmt.Sprintf("fail cmd '%s', err: %v", rawCmd, err)
 		} else {
@@ -117,7 +117,7 @@ func callWord(rawCmd string, action string, args string) string {
 			}
 			return buf.String()
 		}
-	case "get":
+	case "g", "get":
 		if w, err := srv.QueryWord(context.TODO(), args); err != nil {
 			return fmt.Sprintf("fail cmd '%s', err: %v", rawCmd, err)
 		} else {
@@ -125,7 +125,18 @@ func callWord(rawCmd string, action string, args string) string {
 			buf.WriteString(w.String())
 			return buf.String()
 		}
-	case "hide":
+	case "h", "hide":
+		if err := srv.HideWord(context.TODO(), args); err != nil {
+			return fmt.Sprintf("fail cmd '%s', err: %v", rawCmd, err)
+		} else {
+			return fmt.Sprintf("HIDE '%s' OK ", args)
+		}
+	case "uh", "unhide":
+		if err := srv.UnHideWord(context.TODO(), args); err != nil {
+			return fmt.Sprintf("fail cmd '%s', err: %v", rawCmd, err)
+		} else {
+			return fmt.Sprintf("UNHIDE '%s' OK ", args)
+		}
 	}
 	return fmt.Sprintf("not support %s", action)
 }

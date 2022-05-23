@@ -71,12 +71,30 @@ func (srv *Service) SaveWord(ctx context.Context, word string) (DisplayWord, err
 
 // HideWord 隐藏单词.
 func (srv *Service) HideWord(ctx context.Context, word string) error {
-	_, err := srv.client.Words.
+	if affectRows, err := srv.client.Words.
 		Update().
-		Where(words.WordEQ(word)).
+		Where(words.WordEQ(word), words.IsHide(false)).
 		SetIsHide(true).
-		Save(ctx)
-	return err
+		Save(ctx); err != nil {
+		return err
+	} else if affectRows == 0 {
+		return fmt.Errorf("update 0 rows for word '%s'", word)
+	}
+	return nil
+}
+
+// UnHideWord 反隐藏单词.
+func (srv *Service) UnHideWord(ctx context.Context, word string) error {
+	if affectRows, err := srv.client.Words.
+		Update().
+		Where(words.WordEQ(word), words.IsHide(true)).
+		SetIsHide(false).
+		Save(ctx); err != nil {
+		return err
+	} else if affectRows == 0 {
+		return fmt.Errorf("update 0 rows for word '%s'", word)
+	}
+	return nil
 }
 
 // HideWords 隐藏单词.
@@ -112,8 +130,8 @@ func (srv *Service) RandomWords(ctx context.Context, num int) ([]DisplayWord, er
 		})
 	} else {
 		// 生成随机 ids
-		idxNeed, _ := rand.GenIntsAmong(num, 0, len(ws))
-		for i := range idxNeed {
+		idxesNeed, _ := rand.GenIntsAmong(num, 0, len(ws))
+		for _, i := range idxesNeed {
 			ids = append(ids, ws[i].ID)
 		}
 	}
